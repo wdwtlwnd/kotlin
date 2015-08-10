@@ -6,7 +6,7 @@ class A() {
     <!UNUSED_EXPRESSION!>this<!>
   }
 
-  val x = this@A.foo()
-  val y = this.foo()
-  val z = foo()
+  val x = <!DEBUG_INFO_LEAKING_THIS!>this@A<!>.foo()
+  val y = <!DEBUG_INFO_LEAKING_THIS!>this<!>.foo()
+  val z = <!DEBUG_INFO_LEAKING_THIS!>foo()<!>
 }
