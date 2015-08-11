@@ -22,8 +22,10 @@ import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.MagicKind
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.ReadValueInstruction
 import org.jetbrains.kotlin.cfg.pseudocodeTraverser.TraversalOrder
 import org.jetbrains.kotlin.cfg.pseudocodeTraverser.traverse
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.isFinalOrEnum
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
@@ -31,6 +33,8 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 sealed class LeakingThisDescriptor {
     class PropertyIsNull(property: PropertyDescriptor) : LeakingThisDescriptor()
+
+    class NonFinalClass(klass: ClassDescriptor): LeakingThisDescriptor()
 }
 
 class ConstructorConsistencyChecker private constructor(declaration: KtDeclaration, private val trace: BindingTrace) {
@@ -38,6 +42,8 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
     private val classOrObject = declaration as? KtClassOrObject ?: (declaration as KtConstructor<*>).getContainingClassOrObject()
 
     private val classDescriptor = trace.get(BindingContext.CLASS, classOrObject)
+
+    private val finalClass = classDescriptor?.isFinalOrEnum ?: true
 
     private val pseudocode = PseudocodeUtil.generatePseudocode(declaration, trace.bindingContext)
 
@@ -83,6 +89,9 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
                 val uninitializedProperty = firstUninitializedNotNullProperty()
                 if (uninitializedProperty != null) {
                     trace.record(BindingContext.LEAKING_THIS, expression, LeakingThisDescriptor.PropertyIsNull(uninitializedProperty))
+                }
+                else if (!finalClass && classDescriptor != null) {
+                    trace.record(BindingContext.LEAKING_THIS, expression, LeakingThisDescriptor.NonFinalClass(classDescriptor))
                 }
             }
 
