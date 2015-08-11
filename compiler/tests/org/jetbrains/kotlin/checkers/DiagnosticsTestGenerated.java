@@ -2943,6 +2943,12 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("openProperty.kt")
+            public void testOpenProperty() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/constructorConsistency/openProperty.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("outer.kt")
             public void testOuter() throws Exception {
                 String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/constructorConsistency/outer.kt");

@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.isFinalOrEnum
+import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
@@ -35,6 +36,8 @@ sealed class LeakingThisDescriptor {
     class PropertyIsNull(property: PropertyDescriptor) : LeakingThisDescriptor()
 
     class NonFinalClass(klass: ClassDescriptor): LeakingThisDescriptor()
+
+    class NonFinalProperty(property: PropertyDescriptor): LeakingThisDescriptor()
 }
 
 class ConstructorConsistencyChecker private constructor(declaration: KtDeclaration, private val trace: BindingTrace) {
@@ -49,12 +52,26 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
 
     private val variablesData = PseudocodeVariablesData(pseudocode, trace.bindingContext)
 
+    private fun checkOpenPropertyAccess(reference: KtReferenceExpression) {
+        if (!finalClass) {
+            val descriptor = trace.get(BindingContext.REFERENCE_TARGET, reference)
+            if (descriptor is PropertyDescriptor && descriptor.isOverridable) {
+                trace.record(BindingContext.LEAKING_THIS, reference, LeakingThisDescriptor.NonFinalProperty(descriptor));
+            }
+        }
+    }
+
     private fun safeThisUsage(expression: KtThisExpression): Boolean {
         val referenceDescriptor = trace.get(BindingContext.REFERENCE_TARGET, expression.instanceReference)
         if (referenceDescriptor != classDescriptor) return true
         val parent = expression.parent
         return when (parent) {
-            is KtQualifiedExpression -> parent.selectorExpression is KtSimpleNameExpression
+            is KtQualifiedExpression ->
+                if (parent.selectorExpression is KtSimpleNameExpression) {
+                    checkOpenPropertyAccess(parent.selectorExpression as KtSimpleNameExpression)
+                    true
+                }
+                else false
             is KtBinaryExpression -> OperatorConventions.EQUALS_OPERATIONS.contains(parent.operationToken) ||
                                      OperatorConventions.IDENTITY_EQUALS_OPERATIONS.contains(parent.operationToken)
             else -> false
@@ -108,9 +125,14 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
                             }
                         }
                 is MagicInstruction ->
-                        if (instruction.kind == MagicKind.IMPLICIT_RECEIVER && instruction.element is KtCallExpression) {
-                            if (!safeCallUsage(instruction.element)) {
-                                handleLeakingThis(instruction.element)
+                        if (instruction.kind == MagicKind.IMPLICIT_RECEIVER) {
+                            if (instruction.element is KtCallExpression) {
+                                if (!safeCallUsage(instruction.element)) {
+                                    handleLeakingThis(instruction.element)
+                                }
+                            }
+                            else if (instruction.element is KtReferenceExpression) {
+                                checkOpenPropertyAccess(instruction.element)
                             }
                         }
             }
