@@ -193,6 +193,9 @@ public class KotlinTypeCheckerTest extends KotlinTestWithEnvironment {
     }
 
     public void testIntersect() throws Exception {
+        assertIntersection("Array<Any?>", "Array<Any?>", "Array<in Any?>");
+        assertIntersection("Enum<*>", "Enum<*>", "Enum<out Any>");
+
         assertIntersection("Long", "Long?", "Number");
         assertIntersection("Long", "Number", "Long?");
         assertIntersection("Number", "Number?", "Number");

@@ -107,13 +107,18 @@ public class TypeCheckingProcedure {
             TypeParameterDescriptor typeParameter1 = constructor1.getParameters().get(i);
             TypeParameterDescriptor typeParameter2 = constructor2.getParameters().get(i);
 
-            if (capture(typeProjection1, typeProjection2, typeParameter1)) {
+            if (capture(typeProjection1, typeProjection2, typeParameter1) &&
+                capture(typeProjection2, typeProjection1, typeParameter2)) {
                 continue;
             }
-            if (getEffectiveProjectionKind(typeParameter1, typeProjection1) != getEffectiveProjectionKind(typeParameter2, typeProjection2)) {
+            EnrichedProjectionKind kind1 = getEffectiveProjectionKind(typeParameter1, typeProjection1);
+            EnrichedProjectionKind kind2 = getEffectiveProjectionKind(typeParameter2, typeProjection2);
+            if (kind1 != kind2) {
                 return false;
             }
-
+            if (kind1 == EnrichedProjectionKind.STAR) {
+                continue;
+            }
             if (!constraints.assertEqualTypes(typeProjection1.getType(), typeProjection2.getType(), this)) {
                 return false;
             }
@@ -180,7 +185,29 @@ public class TypeCheckingProcedure {
         }
 
         // If they are not opposite, return b, because b is either equal to a or b is in/out and a is inv
-        return EnrichedProjectionKind.fromVariance(b);
+        EnrichedProjectionKind result = EnrichedProjectionKind.fromVariance(b);
+        KotlinType argumentType = typeArgument.getType();
+        switch (result) {
+            case IN:
+                if (KotlinBuiltIns.isNullableAny(argumentType)) {
+                    return EnrichedProjectionKind.INV;
+                }
+                break;
+            case OUT:
+                if (KotlinBuiltIns.isNothing(argumentType)) {
+                    return EnrichedProjectionKind.INV;
+                }
+                for (KotlinType bound : typeParameter.getUpperBounds()) {
+                    if (!KotlinTypeChecker.DEFAULT.isSubtypeOf(argumentType, bound) &&
+                        KotlinTypeChecker.DEFAULT.isSubtypeOf(bound, argumentType)) {
+                        return EnrichedProjectionKind.STAR;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return result;
     }
 
     public boolean isSubtypeOf(@NotNull KotlinType subtype, @NotNull KotlinType supertype) {
@@ -236,30 +263,39 @@ public class TypeCheckingProcedure {
             TypeProjection superArgument = superArguments.get(i);
             TypeProjection subArgument = subArguments.get(i);
 
-            if (superArgument.isStarProjection()) continue;
+            if (!checkSubtypeForTypeArguments(parameter, superArgument, subArgument)) return false;
+        }
+        return true;
+    }
 
-            if (capture(subArgument, superArgument, parameter)) continue;
+    private boolean checkSubtypeForTypeArguments(
+            @NotNull TypeParameterDescriptor subParameter,
+            @NotNull TypeProjection superArgument,
+            @NotNull TypeProjection subArgument
+    ) {
+        if (superArgument.isStarProjection()) return true;
 
-            boolean argumentIsErrorType = subArgument.getType().isError() || superArgument.getType().isError();
-            if (!argumentIsErrorType && parameter.getVariance() == INVARIANT &&
-                subArgument.getProjectionKind() == INVARIANT && superArgument.getProjectionKind() == INVARIANT) {
-                if (!constraints.assertEqualTypes(subArgument.getType(), superArgument.getType(), this)) return false;
-                continue;
-            }
+        if (capture(subArgument, superArgument, subParameter)) return true;
 
-            KotlinType superOut = getOutType(parameter, superArgument);
-            KotlinType subOut = getOutType(parameter, subArgument);
-            if (!constraints.assertSubtype(subOut, superOut, this)) return false;
+        boolean argumentIsErrorType = subArgument.getType().isError() || superArgument.getType().isError();
+        if (!argumentIsErrorType && subParameter.getVariance() == INVARIANT &&
+            subArgument.getProjectionKind() == INVARIANT && superArgument.getProjectionKind() == INVARIANT) {
+            if (!constraints.assertEqualTypes(subArgument.getType(), superArgument.getType(), this)) return false;
+            return true;
+        }
 
-            KotlinType superIn = getInType(parameter, superArgument);
-            KotlinType subIn = getInType(parameter, subArgument);
+        KotlinType superOut = getOutType(subParameter, superArgument);
+        KotlinType subOut = getOutType(subParameter, subArgument);
+        if (!constraints.assertSubtype(subOut, superOut, this)) return false;
 
-            if (superArgument.getProjectionKind() != Variance.OUT_VARIANCE) {
-                if (!constraints.assertSubtype(superIn, subIn, this)) return false;
-            }
-            else {
-                assert KotlinBuiltIns.isNothing(superIn) : "In component must be Nothing for out-projection";
-            }
+        KotlinType superIn = getInType(subParameter, superArgument);
+        KotlinType subIn = getInType(subParameter, subArgument);
+
+        if (superArgument.getProjectionKind() != Variance.OUT_VARIANCE) {
+            if (!constraints.assertSubtype(superIn, subIn, this)) return false;
+        }
+        else {
+            assert KotlinBuiltIns.isNothing(superIn) : "In component must be Nothing for out-projection";
         }
         return true;
     }
