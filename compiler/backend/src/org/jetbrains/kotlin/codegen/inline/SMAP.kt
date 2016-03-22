@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.codegen.inline
 import gnu.trove.TIntIntHashMap
 import org.jetbrains.kotlin.codegen.ClassBuilder
 import org.jetbrains.kotlin.codegen.SourceInfo
+import org.jetbrains.kotlin.codegen.inline2.CallSiteMarker
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import java.util.*
@@ -29,10 +30,10 @@ class SMAPBuilder(
         val path: String,
         val fileMappings: List<FileMapping>
 ) {
-    private val header = "SMAP\n$source\nKotlin\n*S Kotlin"
+    private val header = "SMAP\n$source\nKotlin"
 
     fun build(): String? {
-        var realMappings = fileMappings.filter {
+        val realMappings = fileMappings.filter {
             val mappings = it.lineMappings
             mappings.isNotEmpty() && mappings.first() != RangeMapping.SKIP
         }
@@ -41,10 +42,34 @@ class SMAPBuilder(
             return null
         }
 
+        val defaultStrata = generateDefaultStrata(realMappings)
+        val debugStrata = generateDebugStrata(realMappings)
+
+        return "$header\n$defaultStrata$debugStrata"
+    }
+
+    private fun generateDefaultStrata(realMappings: List<FileMapping>): String {
         val fileIds = "*F" + realMappings.mapIndexed { id, file -> "\n${file.toSMAPFile(id + 1)}" }.joinToString("")
         val lineMappings = "*L" + realMappings.joinToString("") { it.toSMAPMapping() }
+        val strata = "*S Kotlin\n$fileIds\n$lineMappings\n*E\n"
+        return strata
+    }
 
-        return "$header\n$fileIds\n$lineMappings\n*E\n"
+    private fun generateDebugStrata(realMappings: List<FileMapping>): String {
+        val combinedMapping = FileMapping(source, path)
+        realMappings.forEach { fileMapping ->
+            fileMapping.lineMappings.filter { it.callSiteMarker != null }.forEach { rangeMapping ->
+                combinedMapping.addRangeMapping(RangeMapping(rangeMapping.callSiteMarker!!.lineNumber, rangeMapping.dest, rangeMapping.range))
+            }
+        }
+
+        if (combinedMapping.lineMappings.isEmpty()) return ""
+
+        val newMappings = listOf(combinedMapping)
+        val fileIds = "*F" + newMappings.mapIndexed { id, file -> "\n${file.toSMAPFile(id + 1)}" }.joinToString("")
+        val lineMappings = "*L" + newMappings.joinToString("") { it.toSMAPMapping() }
+        val strata = "*S KotlinDebug\n$fileIds\n$lineMappings\n*E\n"
+        return strata
     }
 
     private fun RangeMapping.toSMAP(fileId: Int): String {
@@ -145,9 +170,7 @@ interface SourceMapper {
 
     companion object {
         fun flushToClassBuilder(mapper: SourceMapper, v: ClassBuilder) {
-            for (fileMapping in mapper.resultMappings) {
-                v.addSMAP(fileMapping)
-            }
+            mapper.resultMappings.forEach { fileMapping -> v.addSMAP(fileMapping) }
         }
 
         fun createFromSmap(smap: SMAP): SourceMapper {
@@ -333,7 +356,7 @@ open class FileMapping(val name: String, val path: String) {
 }
 
 //TODO comparable
-data class RangeMapping(val source: Int, val dest: Int, var range: Int = 1) {
+data class RangeMapping(val source: Int, val dest: Int, var range: Int = 1, var callSiteMarker: CallSiteMarker? = null) {
     var parent: FileMapping? = null
     private val skip = source == -1 && dest == -1
 
@@ -370,3 +393,6 @@ data class RangeMapping(val source: Int, val dest: Int, var range: Int = 1) {
         val SKIP = RangeMapping(-1, -1, 1)
     }
 }
+
+val RangeMapping.toRange: IntRange
+    get() = this.dest..this.maxDest

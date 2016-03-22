@@ -73,7 +73,7 @@ public abstract class MemberCodegen<T extends KtElement/* TODO: & JetDeclaration
     protected final GenerationState state;
     protected final T element;
     protected final FieldOwnerContext context;
-    protected final ClassBuilder v;
+    public final ClassBuilder v; //TODO temp hack
     protected final FunctionCodegen functionCodegen;
     protected final PropertyCodegen propertyCodegen;
     protected final KotlinTypeMapper typeMapper;
@@ -86,7 +86,8 @@ public abstract class MemberCodegen<T extends KtElement/* TODO: & JetDeclaration
     protected ExpressionCodegen clInit;
     private NameGenerator inlineNameGenerator;
 
-    private SourceMapper sourceMapper;
+    private DefaultSourceMapper sourceMapper;
+
     private final ConstantExpressionEvaluator constantExpressionEvaluator;
 
     public MemberCodegen(
@@ -557,7 +558,7 @@ public abstract class MemberCodegen<T extends KtElement/* TODO: & JetDeclaration
     }
 
     @NotNull
-    public SourceMapper getOrCreateSourceMapper() {
+    public DefaultSourceMapper getOrCreateSourceMapper() {
         if (sourceMapper == null) {
             sourceMapper = new DefaultSourceMapper(SourceInfo.Companion.createInfo(element, getClassName()));
         }
