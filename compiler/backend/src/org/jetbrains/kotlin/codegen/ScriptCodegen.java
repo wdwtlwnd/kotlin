@@ -87,7 +87,7 @@ public class ScriptCodegen extends MemberCodegen<KtScript> {
         Type classType = typeMapper.mapClass(context.getContextDescriptor());
 
         v.defineClass(scriptDeclaration,
-                      V1_6,
+                      state.getClassFileVersion(),
                       ACC_PUBLIC | ACC_SUPER,
                       classType.getInternalName(),
                       null,

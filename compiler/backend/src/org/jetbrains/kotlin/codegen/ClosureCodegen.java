@@ -148,7 +148,7 @@ public class ClosureCodegen extends MemberCodegen<KtElement> {
         }
 
         v.defineClass(element,
-                      V1_6,
+                      state.getClassFileVersion(),
                       ACC_FINAL | ACC_SUPER | visibilityFlag,
                       asmType.getInternalName(),
                       sw.makeJavaGenericSignature(),
