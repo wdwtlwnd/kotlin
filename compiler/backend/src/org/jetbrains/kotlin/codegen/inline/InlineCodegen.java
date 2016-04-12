@@ -309,12 +309,15 @@ public class InlineCodegen extends CallGenerator {
         }
         KtNamedFunction inliningFunction = (KtNamedFunction) element;
 
-        MethodNode node = new MethodNode(InlineCodegenUtil.API,
-                                       getMethodAsmFlags(functionDescriptor, context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),
-                                       asmMethod.getName(),
-                                       asmMethod.getDescriptor(),
-                                       null,
-                                       null);
+        MethodNode node = new MethodNode(
+                InlineCodegenUtil.API,
+                getMethodAsmFlags(functionDescriptor, context.getContextKind(), state) |
+                (callDefault ? Opcodes.ACC_STATIC : 0),
+                asmMethod.getName(),
+                asmMethod.getDescriptor(),
+                null,
+                null
+        );
 
         //for maxLocals calculation
         MethodVisitor maxCalcAdapter = InlineCodegenUtil.wrapWithMaxLocalCalc(node);
@@ -453,7 +456,7 @@ public class InlineCodegen extends CallGenerator {
 
         JvmMethodSignature jvmMethodSignature = typeMapper.mapSignatureSkipGeneric(descriptor);
         Method asmMethod = jvmMethodSignature.getAsmMethod();
-        MethodNode methodNode = new MethodNode(InlineCodegenUtil.API, getMethodAsmFlags(descriptor, context.getContextKind()), asmMethod.getName(), asmMethod.getDescriptor(), null, null);
+        MethodNode methodNode = new MethodNode(InlineCodegenUtil.API, getMethodAsmFlags(descriptor, context.getContextKind(), state), asmMethod.getName(), asmMethod.getDescriptor(), null, null);
 
         MethodVisitor adapter = InlineCodegenUtil.wrapWithMaxLocalCalc(methodNode);
 
@@ -650,7 +653,7 @@ public class InlineCodegen extends CallGenerator {
 
     @Override
     public void putHiddenParams() {
-        if ((getMethodAsmFlags(functionDescriptor, context.getContextKind()) & Opcodes.ACC_STATIC) == 0) {
+        if ((getMethodAsmFlags(functionDescriptor, context.getContextKind(), state) & Opcodes.ACC_STATIC) == 0) {
             invocationParamBuilder.addNextParameter(AsmTypes.OBJECT_TYPE, false, null);
         }
 
