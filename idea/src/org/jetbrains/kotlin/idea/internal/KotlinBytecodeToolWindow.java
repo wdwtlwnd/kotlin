@@ -172,7 +172,7 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
         enableInline = new JCheckBox("Enable inline", true);
         enableOptimization = new JCheckBox("Enable optimization", true);
         enableAssertions = new JCheckBox("Enable assertions", true);
-        java8Target = new JCheckBox("Java 8 target", false);
+        java8Target = new JCheckBox("Java 8 target", true);
         optionPanel.add(enableInline);
         optionPanel.add(enableOptimization);
         optionPanel.add(enableAssertions);
