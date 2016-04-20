@@ -78,6 +78,7 @@ public abstract class BasicTest extends KotlinTestWithEnvironment {
     private static final String OUT = "out/";
     private static final String EXPECTED = "expected/";
     private static final String COMMON_FILES_DIR = "_commonFiles/";
+    public static final String MODULE_EMULATION_FILE = TEST_DATA_DIR_PATH + "/moduleEmulation.js";
 
     public static final String TEST_MODULE = "JS_TESTS";
     public static final String TEST_PACKAGE = "foo";
@@ -324,13 +325,19 @@ public abstract class BasicTest extends KotlinTestWithEnvironment {
             librariesWithStdlib.addAll(libraries);
         }
 
-        return new LibrarySourcesConfig.Builder(project, moduleId, librariesWithStdlib)
+        LibrarySourcesConfig.Builder configBuilder = new LibrarySourcesConfig.Builder(project, moduleId, librariesWithStdlib)
                 .ecmaVersion(ecmaVersion)
                 .sourceMap(shouldGenerateSourceMap())
                 .inlineEnabled(IS_INLINE_ENABLED)
                 .isUnitTestConfig(shouldBeTranslateAsUnitTestClass())
-                .metaInfo(shouldGenerateMetaInfo())
-                .build();
+                .metaInfo(shouldGenerateMetaInfo());
+        setupConfig(configBuilder);
+        return configBuilder.build();
+    }
+
+    @SuppressWarnings("EmptyMethod")
+    protected void setupConfig(@NotNull LibrarySourcesConfig.Builder builder) {
+        // Do nothing by default, expect inheritors to implement this method
     }
 
     @NotNull
