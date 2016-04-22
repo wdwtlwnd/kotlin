@@ -386,11 +386,19 @@
         <condition property="jdk17" value="${env.JDK_17}" else="${env.JAVA_HOME}">
             <isset property="env.JDK_17" />
         </condition>
-        <exec executable="ant" failonerror="true">
-            <env key="JAVA_HOME" value="${jdk17}" />
-            <arg line='-f "build.xml"' />
+        <java classname="org.apache.tools.ant.launch.Launcher"
+              fork="true"
+              failonerror="true"
+              timeout="4000000"
+              taskname="startAnt">
+            <env key="JAVA_HOME" value="${jdk17}"/>
+            <classpath>
+                <pathelement location="${ant.home}/lib/ant-launcher.jar"/>
+            </classpath>
+            <arg line="-f" />
+            <arg line="build.xml" />
             <arg line="js-stdlib-merge" />
-        </exec>
+        </java>
 
         <jar jarfile="${kotlin-home}/lib/kotlin-jslib.jar" duplicate="fail">
             <zipfileset file="${kotlin-home}/build.txt" prefix="META-INF"/>
