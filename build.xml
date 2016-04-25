@@ -390,7 +390,8 @@
               fork="true"
               failonerror="true"
               timeout="4000000"
-              taskname="startAnt">
+              taskname="startAnt"
+              jvm="${jdk17}/bin/java">
             <env key="JAVA_HOME" value="${jdk17}"/>
             <classpath>
                 <pathelement location="${ant.home}/lib/ant-launcher.jar"/>
