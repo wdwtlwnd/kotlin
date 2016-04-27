@@ -88,7 +88,7 @@ public class CodegenTestsOnAndroidRunner {
         Emulator emulator = new Emulator(pathManager, Emulator.ARM);
         GradleRunner gradleRunner = new GradleRunner(pathManager);
         gradleRunner.clean();
-        //gradleRunner.build();
+        gradleRunner.build();
 
         emulator.createEmulator();
 
