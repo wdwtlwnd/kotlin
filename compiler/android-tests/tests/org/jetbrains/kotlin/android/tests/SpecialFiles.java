@@ -77,6 +77,10 @@ public class SpecialFiles {
         excludedFiles.add("importStaticMemberFromObject.kt");
         //TODO: fix bad class file
         excludedFiles.add("genericProperty.kt");
+
+
+        //native methods
+        excludedFiles.add("external");
     }
 
     private SpecialFiles() {
