@@ -85,7 +85,7 @@ public class CodegenTestsOnAndroidRunner {
 
         AntRunner antRunner = new AntRunner(pathManager);
         antRunner.packLibraries();
-        Emulator emulator = new Emulator(pathManager, Emulator.ARM);
+        Emulator emulator = new Emulator(pathManager, Emulator.X86);
         GradleRunner gradleRunner = new GradleRunner(pathManager);
         gradleRunner.clean();
         gradleRunner.build();
