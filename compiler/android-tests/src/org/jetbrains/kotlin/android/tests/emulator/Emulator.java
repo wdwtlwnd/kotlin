@@ -132,15 +132,17 @@ public class Emulator {
         System.out.println("Starting emulator...");
         RunUtils.executeOnSeparateThread(new RunUtils.RunSettings(getStartCommand(), null, false, "START: ", true));
         //disabled cause of missed test results
-        //printLog();
+        printLog();
     }
 
     public void printLog() {
         GeneralCommandLine commandLine = createAdbCommand();
         commandLine.addParameter("logcat");
         commandLine.addParameter("-v");
-        commandLine.addParameter("time");
-        commandLine.addParameter("*:I");
+        commandLine.addParameter("brief");
+        commandLine.addParameter("-s");
+        //commandLine.addParameter("TestRunner:I");
+        commandLine.addParameter("dalvikvm:W");
         RunUtils.executeOnSeparateThread(new RunUtils.RunSettings(commandLine, null, false, "LOGCAT: ", true));
     }
 
@@ -176,7 +178,7 @@ public class Emulator {
         System.out.println("Stopping emulator...");
         try {
             //added cause of missed test results
-            Thread.sleep(20000);
+            Thread.sleep(600000);
         }
         catch (InterruptedException e) {
             e.printStackTrace();
