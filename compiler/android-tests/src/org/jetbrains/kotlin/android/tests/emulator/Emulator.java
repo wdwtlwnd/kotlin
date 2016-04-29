@@ -132,7 +132,7 @@ public class Emulator {
         System.out.println("Starting emulator...");
         RunUtils.executeOnSeparateThread(new RunUtils.RunSettings(getStartCommand(), null, false, "START: ", true));
         //disabled cause of missed test results
-        printLog();
+        //printLog();
     }
 
     public void printLog() {
