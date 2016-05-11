@@ -17,8 +17,10 @@
 package org.jetbrains.kotlin.config;
 
 import org.jetbrains.kotlin.script.KotlinScriptDefinition;
+import org.jetbrains.kotlin.script.KotlinScriptExtraImport;
 
 import java.util.List;
+import java.util.Map;
 
 public class CommonConfigurationKeys {
     private CommonConfigurationKeys() {
@@ -28,4 +30,6 @@ public class CommonConfigurationKeys {
     public static final CompilerConfigurationKey<List<ContentRoot>> CONTENT_ROOTS = CompilerConfigurationKey.create("content roots");
 
     public static final CompilerConfigurationKey<List<KotlinScriptDefinition>> SCRIPT_DEFINITIONS_KEY = CompilerConfigurationKey.create("script definitions");
+
+    public static final CompilerConfigurationKey<Map<String, KotlinScriptExtraImport>> SCRIPTS_EXTRA_IMPORTS_KEY = CompilerConfigurationKey.create("scripts extra imports");
 }
