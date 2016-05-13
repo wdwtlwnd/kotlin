@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor;
 import org.jetbrains.kotlin.descriptors.ModuleDescriptorKt;
 import org.jetbrains.kotlin.fileClasses.NoResolveFileClassesProvider;
 import org.jetbrains.kotlin.frontend.di.InjectionKt;
+import org.jetbrains.kotlin.idea.script.KotlinScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex;
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope;
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex;
@@ -102,9 +103,16 @@ public class SourceNavigationHelper {
         }
 
         Project project = declaration.getProject();
-        return includeLibrarySources
-               ? KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)
-               : KotlinSourceFilterScope.libraryClassFiles(GlobalSearchScope.allScope(project), project);
+        if (includeLibrarySources) {
+            GlobalSearchScope libSourcesScope = KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project);
+            GlobalSearchScope scriptsScope = KotlinScriptConfigurationManager.getInstance(project).getAllScriptsSourcesScope();
+            return scriptsScope != null
+                   ? GlobalSearchScope.union(new GlobalSearchScope[] {scriptsScope, libSourcesScope})
+                   : libSourcesScope;
+        }
+        else {
+            return KotlinSourceFilterScope.libraryClassFiles(GlobalSearchScope.allScope(project), project);
+        }
     }
 
     private static List<KtFile> getContainingFiles(@NotNull Iterable<KtNamedDeclaration> declarations) {
