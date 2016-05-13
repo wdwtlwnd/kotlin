@@ -91,6 +91,7 @@ class KotlinScriptConfigurationManager(project: Project,
     }
 
     private var allScriptsClasspathCache: List<VirtualFile>? = null
+    private var allScriptsSourcesCache: List<VirtualFile>? = null
     private val cacheLock = java.util.concurrent.locks.ReentrantReadWriteLock()
 
     fun getScriptClasspath(file: VirtualFile): List<VirtualFile> =
@@ -110,6 +111,16 @@ class KotlinScriptConfigurationManager(project: Project,
         return allScriptsClasspathCache!!
     }
 
+    fun getAllScriptsSources(): List<VirtualFile> = cacheLock.read {
+        if (allScriptsSourcesCache == null) {
+            allScriptsSourcesCache =
+                    (scriptExtraImportsProvider?.getKnownCombinedSources() ?: emptyList())
+                            .distinct()
+                            .mapNotNull { it.classpathEntryToVfs() }
+        }
+        return allScriptsSourcesCache!!
+    }
+
     private fun String.classpathEntryToVfs(): VirtualFile =
             if (File(this).isDirectory)
                 StandardFileSystems.local()?.findFileByPath(this) ?: throw FileNotFoundException("Classpath entry points to a non-existent location: ${this}")
@@ -118,6 +129,13 @@ class KotlinScriptConfigurationManager(project: Project,
 
     fun getAllScriptsClasspathScope(): GlobalSearchScope? {
         return getAllScriptsClasspath().let { cp ->
+            if (cp.isEmpty()) null
+            else GlobalSearchScope.union(cp.map { FileLibraryScope(myProject, it) }.toTypedArray())
+        }
+    }
+
+    fun getAllScriptsSourcesScope(): GlobalSearchScope? {
+        return getAllScriptsSources().let { cp ->
             if (cp.isEmpty()) null
             else GlobalSearchScope.union(cp.map { FileLibraryScope(myProject, it) }.toTypedArray())
         }
@@ -156,8 +174,10 @@ class KotlinScriptConfigurationManager(project: Project,
 class KotlinScriptDependenciesIndexableSetContributor : IndexableSetContributor() {
 
     override fun getAdditionalProjectRootsToIndex(project: Project): Set<VirtualFile> {
+        val scriptConfigurationManager = KotlinScriptConfigurationManager.getInstance(project)
         return super.getAdditionalProjectRootsToIndex(project) +
-            KotlinScriptConfigurationManager.getInstance(project).getAllScriptsClasspath()
+               scriptConfigurationManager.getAllScriptsClasspath() +
+               scriptConfigurationManager.getAllScriptsSources()
     }
 
     override fun getAdditionalRootsToIndex(): Set<VirtualFile> = emptySet()
