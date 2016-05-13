@@ -52,6 +52,10 @@ data class KotlinConfigurableScriptDefinition(val config: KotlinScriptConfig, va
     private val evaluatedClasspath by lazy { config.classpath.evalWithVars(environmentVars).distinct() }
 
     override fun getScriptDependenciesClasspath(): List<String> = evaluatedClasspath
+
+    private val evaluatedSources by lazy { config.sources.evalWithVars(environmentVars).distinct() }
+
+    override fun getScriptDependenciesSources(): List<String> = evaluatedSources
 }
 
 

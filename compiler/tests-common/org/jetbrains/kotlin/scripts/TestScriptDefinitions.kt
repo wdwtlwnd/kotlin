@@ -82,7 +82,9 @@ class StandardWithClasspathScriptDefinition(extension: String, classpath: List<S
 class SimpleScriptExtraImport(
         override val classpath: List<String>,
         override val names: List<String> = emptyList()
-) : KotlinScriptExtraImport
+) : KotlinScriptExtraImport {
+    override val sources: List<String> = emptyList()
+}
 
 fun classpathFromProperty(): List<String> =
     System.getProperty("java.class.path")?.let {

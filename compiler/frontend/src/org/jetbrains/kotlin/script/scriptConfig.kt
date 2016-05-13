@@ -91,6 +91,10 @@ data class KotlinScriptConfig(
         @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
         var classpath: MutableList<String> = ArrayList(),
 
+        @Tag("sources")
+        @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
+        var sources: MutableList<String> = ArrayList(),
+
         @Tag("parameters")
         @AbstractCollection(surroundWithTag = false, elementValueAttribute = "")
         var parameters: MutableList<KotlinScriptParameterConfig> = ArrayList(),

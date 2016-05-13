@@ -113,10 +113,19 @@ class KotlinScriptExtraImportsProvider(val project: Project, private val scriptD
         cache.values.flatMap { it.flatMap { it.classpath } }
     }.distinct()
 
+    fun getKnownCombinedSources(): List<String> = cacheLock.read {
+        cache.values.flatMap { it.flatMap { it.sources } }
+    }.distinct()
+
     fun getCombinedClasspathFor(files: Iterable<VirtualFile>): List<String> =
         getExtraImports(files)
                 .flatMap { it.classpath }
                 .distinct()
+
+    fun getCombinedSourcesFor(files: Iterable<VirtualFile>): List<String> =
+            getExtraImports(files)
+                    .flatMap { it.sources }
+                    .distinct()
 
     fun subscribeOnExtraImportsChanged(handler: (Iterable<String>) -> Unit): Unit {
         handlersLock.write { notificationHandlers.add(handler) }

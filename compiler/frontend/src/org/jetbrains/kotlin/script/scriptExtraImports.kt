@@ -29,6 +29,7 @@ import java.util.*
  */
 interface KotlinScriptExtraImport {
     val classpath: List<String>
+    val sources: List<String>
     val names: List<String>
 }
 
@@ -39,6 +40,10 @@ class KotlinScriptExtraImportConfig {
     @Tag("classpath")
     @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
     var classpath: MutableList<String> = ArrayList()
+
+    @Tag("sources")
+    @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
+    var sources: MutableList<String> = ArrayList()
 
     @Tag("names")
     @AbstractCollection(surroundWithTag = false, elementTag = "name", elementValueAttribute = "")
@@ -57,11 +62,13 @@ fun loadScriptExtraImportConfigs(configStream: InputStream): List<KotlinScriptEx
 
 class KotlinScriptExtraImportFromConfig(val config : KotlinScriptExtraImportConfig, val envVars: Map<String, List<String>>) : KotlinScriptExtraImport {
     override val classpath: List<String> by lazy { config.classpath.evalWithVars(envVars).distinct() }
+    override val sources: List<String> by lazy { config.sources.evalWithVars(envVars).distinct() }
     override val names: List<String>
         get() = config.names
 }
 
 class KotlinScriptExtraImportFromDefinition(val scriptDefinition: KotlinScriptDefinition) : KotlinScriptExtraImport {
     override val classpath: List<String> get() = scriptDefinition.getScriptDependenciesClasspath()
+    override val sources: List<String> get() = scriptDefinition.getScriptDependenciesSources()
     override val names: List<String> = emptyList()
 }

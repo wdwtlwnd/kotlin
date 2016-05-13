@@ -43,6 +43,7 @@ interface KotlinScriptDefinition {
     fun isScript(file: VirtualFile): Boolean
     fun getScriptName(script: KtScript): Name
     fun getScriptDependenciesClasspath(): List<String>
+    fun getScriptDependenciesSources(): List<String> = emptyList()
 }
 
 data class ScriptParameter(val name: Name, val type: KotlinType)
