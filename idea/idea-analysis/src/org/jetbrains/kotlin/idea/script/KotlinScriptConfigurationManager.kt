@@ -72,21 +72,21 @@ class KotlinScriptConfigurationManager(project: Project,
                     }
                 }
                 if (anyScriptDefinitionChanged) {
-                    weakThis.get()?.reloadScriptDefinitions()
+//                    weakThis.get()?.reloadScriptDefinitions()
                 }
                 if (changedExtraImportConfigs.isNotEmpty()) {
-                    weakThis.get()?.scriptExtraImportsProvider?.invalidateExtraImportsByImportsFiles(changedExtraImportConfigs)
+//                    weakThis.get()?.scriptExtraImportsProvider?.invalidateExtraImportsByImportsFiles(changedExtraImportConfigs)
                 }
             }
         })
         // omitting case then scriptExtraImportsProvider is not configured, considering it happens only in tests
         scriptExtraImportsProvider?.subscribeOnExtraImportsChanged { files ->
-            weakThis.get()?.apply {
-                cacheLock.write {
-                    allScriptsClasspathCache = null
-                }
-                ProjectRootManagerEx.getInstanceEx(myProject)?.makeRootsChange(EmptyRunnable.getInstance(), false, true)
-            }
+//            weakThis.get()?.apply {
+//                cacheLock.write {
+//                    allScriptsClasspathCache = null
+//                }
+//                ProjectRootManagerEx.getInstanceEx(myProject)?.makeRootsChange(EmptyRunnable.getInstance(), false, true)
+//            }
         }
     }
 
