@@ -141,7 +141,7 @@ public final class Translation {
         }
 
         block.getStatements().add(convertToStatement(jsNode));
-        return context.getEmptyExpression();
+        return JsLiteral.NULL;
     }
 
     @NotNull
