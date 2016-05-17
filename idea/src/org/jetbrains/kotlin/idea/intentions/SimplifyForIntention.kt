@@ -75,7 +75,17 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
 
         var otherUsages = false
         var removeSelectorInLoopRange = false
-        val propertiesToRemove: Array<KtProperty?>
+        val propertiesToRemove : Array<KtProperty?>
+        val propertiesToAdd: Array<Boolean>
+
+        fun handleProperty(index: Int, property: KtProperty?) {
+            if (property != null) {
+                propertiesToRemove[index] = property
+            }
+            else {
+                propertiesToAdd[index] = true
+            }
+        }
 
         if (DescriptorUtils.isSubclass(classDescriptor, classDescriptor.builtIns.mapEntry)) {
             val loopRangeDescriptorName = element.loopRange.getResolvedCall(context)?.resultingDescriptor?.name
@@ -85,10 +95,18 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
             }
 
             propertiesToRemove = arrayOfNulls<KtProperty>(2)
+            propertiesToAdd = Array(2, { false })
 
             ReferencesSearch.search(loopParameter).iterateOverMapEntryPropertiesUsages(
                     context,
-                    { index, property -> propertiesToRemove[index] = property },
+                    { index, property ->
+                        if (property != null) {
+                            propertiesToRemove[index] = property
+                        }
+                        else {
+                            propertiesToAdd[index] = true
+                        }
+                    }
                     { otherUsages = true }
             )
 
@@ -99,11 +117,12 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
         else if (classDescriptor.isData) {
             val valueParameters = classDescriptor.unsubstitutedPrimaryConstructor?.valueParameters ?: return null
             propertiesToRemove = arrayOfNulls<KtProperty>(valueParameters.size)
+            propertiesToAdd = Array(valueParameters.size, { false })
 
             ReferencesSearch.search(loopParameter).iterateOverDataClassPropertiesUsagesWithIndex(
                     context,
                     classDescriptor,
-                    { index, property -> propertiesToRemove[index] = property },
+                    ::handleProperty,
                     { otherUsages = true }
             )
 
@@ -121,7 +140,7 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
 
     private fun Query<PsiReference>.iterateOverMapEntryPropertiesUsages(
             context: BindingContext,
-            process: (Int, KtProperty) -> Unit,
+            process: (Int, KtProperty?) -> Unit,
             cancel: () -> Unit
     ) {
         // TODO: Remove SAM-constructor when KT-11265 will be fixed
@@ -147,7 +166,7 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
     private fun Query<PsiReference>.iterateOverDataClassPropertiesUsagesWithIndex(
             context: BindingContext,
             dataClass: ClassDescriptor,
-            process: (Int, KtProperty) -> Unit,
+            process: (Int, KtProperty?) -> Unit,
             cancel: () -> Unit
     ) {
         val valueParameters = dataClass.unsubstitutedPrimaryConstructor?.valueParameters ?: return
@@ -171,12 +190,12 @@ class SimplifyForIntention : SelfTargetingRangeIntention<KtForExpression>(
 
     private fun getDataIfUsageIsApplicable(usage: PsiReference, context: BindingContext): UsageData? {
         val parentCall = usage.element.parent as? KtExpression ?: return null
-        val property = parentCall.parent as? KtProperty ?: return null
+        val property = parentCall.parent as? KtProperty
         val resolvedCall = parentCall.getResolvedCall(context) ?: return null
 
         val descriptor = resolvedCall.resultingDescriptor
         return UsageData(property, descriptor)
     }
 
-    private data class UsageData(val property: KtProperty, val descriptor: CallableDescriptor)
+    private data class UsageData(val property: KtProperty?, val descriptor: CallableDescriptor)
 }

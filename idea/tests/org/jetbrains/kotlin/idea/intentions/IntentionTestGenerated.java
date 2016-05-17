@@ -6525,6 +6525,12 @@ public class IntentionTestGenerated extends AbstractIntentionTest {
             doTest(fileName);
         }
 
+        @TestMetadata("DataClassNoVariablesInside.kt")
+        public void testDataClassNoVariablesInside() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("idea/testData/intentions/iterationOverMap/DataClassNoVariablesInside.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("DataClassNotAllPropertiesUsed.kt")
         public void testDataClassNotAllPropertiesUsed() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("idea/testData/intentions/iterationOverMap/DataClassNotAllPropertiesUsed.kt");
