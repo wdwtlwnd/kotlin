@@ -16,7 +16,10 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -28,6 +31,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -186,4 +190,15 @@ private fun getNegatedOperatorText(token: IElementType): String {
         KtTokens.GTEQ -> KtTokens.LT.value
         else -> throw IllegalArgumentException("The token $token does not have a negated equivalent.")
     }
+}
+
+fun getTopmostExpression(context: PsiElement): KtExpression? {
+    val startElement = PsiTreeUtil.skipSiblingsBackward(context, PsiWhiteSpace::class.java) ?: context
+    return startElement.parentsWithSelf
+            .filterIsInstance<KtExpression>()
+            .takeWhile { it !is KtDeclarationWithBody }
+            .firstOrNull {
+                val parent = it.parent
+                parent is KtBlockExpression || parent is KtDeclarationWithBody && !parent.hasBlockBody() && parent.bodyExpression == it
+            }
 }

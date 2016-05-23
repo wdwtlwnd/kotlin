@@ -20,30 +20,15 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class IntroduceVariableIntention : SelfTargetingRangeIntention<PsiElement>(
         PsiElement::class.java, CodeInsightBundle.message("intention.introduce.variable.text")
 ) {
-    private fun getExpressionToProcess(element: PsiElement): KtExpression? {
-        val startElement = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace::class.java) ?: element
-        return startElement.parentsWithSelf
-                .filterIsInstance<KtExpression>()
-                .takeWhile { it !is KtDeclarationWithBody }
-                .firstOrNull {
-                    val parent = it.parent
-                    parent is KtBlockExpression || parent is KtDeclarationWithBody && !parent.hasBlockBody() && parent.bodyExpression == it
-                }
-    }
+    private fun getExpressionToProcess(element: PsiElement) = getTopmostExpression(element)
 
     override fun applicabilityRange(element: PsiElement): TextRange? {
         val expression = getExpressionToProcess(element) ?: return null
