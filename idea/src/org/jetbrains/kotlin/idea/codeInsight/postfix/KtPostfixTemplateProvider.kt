@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
 import org.jetbrains.kotlin.idea.intentions.getTopmostExpression
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.psi.KtExpression
@@ -30,7 +31,14 @@ import org.jetbrains.kotlin.utils.singletonOrEmptyList
 
 
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
-    override fun getTemplates() = setOf<PostfixTemplate>(KtNotPostfixTemplate)
+    override fun getTemplates() = setOf(
+            KtNotPostfixTemplate,
+            KtIfExpressionPostfixTemplate,
+            KtElseExpressionPostfixTemplate,
+            KtNotNullPostfixTemplate("notnull"),
+            KtNotNullPostfixTemplate("nn"),
+            KtIsNullPostfixTemplate
+    )
 
     override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
 
@@ -47,6 +55,37 @@ private object KtNotPostfixTemplate : NotPostfixTemplate(
         KtPostfixTemplatePsiInfo,
         TopmostExpressionPostfixTemplateSelector
 )
+
+private object KtIfExpressionPostfixTemplate : SurroundPostfixTemplateBase(
+        "if", "if (expr)",
+        KtPostfixTemplatePsiInfo, TopmostExpressionPostfixTemplateSelector
+) {
+    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
+}
+
+private object KtElseExpressionPostfixTemplate : SurroundPostfixTemplateBase(
+        "else", "if (!expr)",
+        KtPostfixTemplatePsiInfo, TopmostExpressionPostfixTemplateSelector
+) {
+    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getWrappedExpression(expression: PsiElement?) = (expression as KtExpression).negate()
+}
+
+private class KtNotNullPostfixTemplate(val name: String) : SurroundPostfixTemplateBase(
+        name, "if (expr != null)",
+        KtPostfixTemplatePsiInfo, TopmostExpressionPostfixTemplateSelector
+) {
+    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getTail() = "!= null"
+}
+
+private object KtIsNullPostfixTemplate : SurroundPostfixTemplateBase(
+        "null", "if (expr == null)",
+        KtPostfixTemplatePsiInfo, TopmostExpressionPostfixTemplateSelector
+) {
+    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getTail() = "== null"
+}
 
 private object KtPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     override fun createExpression(context: PsiElement, prefix: String, suffix: String) =
