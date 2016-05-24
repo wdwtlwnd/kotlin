@@ -36,11 +36,11 @@ import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 sealed class LeakingThisDescriptor {
-    class PropertyIsNull(property: PropertyDescriptor) : LeakingThisDescriptor()
+    class PropertyIsNull(val property: PropertyDescriptor) : LeakingThisDescriptor()
 
-    class NonFinalClass(klass: ClassDescriptor): LeakingThisDescriptor()
+    class NonFinalClass(val klass: ClassDescriptor): LeakingThisDescriptor()
 
-    class NonFinalProperty(property: PropertyDescriptor): LeakingThisDescriptor()
+    class NonFinalProperty(val property: PropertyDescriptor): LeakingThisDescriptor()
 }
 
 class ConstructorConsistencyChecker private constructor(declaration: KtDeclaration, private val trace: BindingTrace) {

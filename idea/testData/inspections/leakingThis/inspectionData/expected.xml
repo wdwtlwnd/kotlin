@@ -1,0 +1,26 @@
+<problems>
+    <problem>
+        <file>test.kt</file>
+        <line>5</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Leaking this in constructor</problem_class>
+        <description>NPE risk: leaking this while not-null x is still null</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>15</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Leaking this in constructor</problem_class>
+        <description>Leaking this in non-final class Second</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>31</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Leaking this in constructor</problem_class>
+        <description>Leaking this accessing non-final property x</description>
+    </problem>
+</problems>
