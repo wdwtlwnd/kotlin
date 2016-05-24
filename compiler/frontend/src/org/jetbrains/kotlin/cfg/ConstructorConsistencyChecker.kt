@@ -35,13 +35,13 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-sealed class LeakingThisDescriptor {
-    class PropertyIsNull(val property: PropertyDescriptor) : LeakingThisDescriptor()
+interface LeakingThisDescriptor
 
-    class NonFinalClass(val klass: ClassDescriptor): LeakingThisDescriptor()
+data class PropertyIsNullLeakingThis(val property: PropertyDescriptor) : LeakingThisDescriptor
 
-    class NonFinalProperty(val property: PropertyDescriptor): LeakingThisDescriptor()
-}
+data class NonFinalClassLeakingThis(val klass: ClassDescriptor): LeakingThisDescriptor
+
+data class NonFinalPropertyLeakingThis(val property: PropertyDescriptor): LeakingThisDescriptor
 
 class ConstructorConsistencyChecker private constructor(declaration: KtDeclaration, private val trace: BindingTrace) {
 
@@ -72,7 +72,7 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
         val descriptor = trace.get(BindingContext.REFERENCE_TARGET, reference)
         if (descriptor is PropertyDescriptor) {
             if (!finalClass && descriptor.isOverridable) {
-                trace.record(BindingContext.LEAKING_THIS, reference, LeakingThisDescriptor.NonFinalProperty(descriptor));
+                trace.record(BindingContext.LEAKING_THIS, reference, NonFinalPropertyLeakingThis(descriptor));
                 return true
             }
             if (descriptor.containingDeclaration != classDescriptor) return true
@@ -120,10 +120,10 @@ class ConstructorConsistencyChecker private constructor(declaration: KtDeclarati
             fun handleLeakingThis(expression: KtExpression) {
                 val uninitializedProperty = firstUninitializedNotNullProperty()
                 if (uninitializedProperty != null) {
-                    trace.record(BindingContext.LEAKING_THIS, expression, LeakingThisDescriptor.PropertyIsNull(uninitializedProperty))
+                    trace.record(BindingContext.LEAKING_THIS, expression, PropertyIsNullLeakingThis(uninitializedProperty))
                 }
                 else if (!finalClass && classDescriptor != null) {
-                    trace.record(BindingContext.LEAKING_THIS, expression, LeakingThisDescriptor.NonFinalClass(classDescriptor))
+                    trace.record(BindingContext.LEAKING_THIS, expression, NonFinalClassLeakingThis(classDescriptor))
                 }
             }
 

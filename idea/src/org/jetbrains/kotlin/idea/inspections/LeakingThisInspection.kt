@@ -21,6 +21,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor
+import org.jetbrains.kotlin.cfg.NonFinalClassLeakingThis
+import org.jetbrains.kotlin.cfg.NonFinalPropertyLeakingThis
+import org.jetbrains.kotlin.cfg.PropertyIsNullLeakingThis
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeFully
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -34,13 +37,13 @@ class LeakingThisInspection : AbstractKotlinInspection() {
                 for (expression in context.getKeys(BindingContext.LEAKING_THIS)) {
                     val leakingThisDescriptor = context.get(BindingContext.LEAKING_THIS, expression)
                     val description = when (leakingThisDescriptor) {
-                        is LeakingThisDescriptor.PropertyIsNull ->
+                        is PropertyIsNullLeakingThis ->
                             "NPE risk: leaking this while not-null ${leakingThisDescriptor.property.name.asString()} is still null"
-                        is LeakingThisDescriptor.NonFinalClass ->
+                        is NonFinalClassLeakingThis ->
                             "Leaking this in non-final class ${leakingThisDescriptor.klass.name.asString()}"
-                        is LeakingThisDescriptor.NonFinalProperty ->
+                        is NonFinalPropertyLeakingThis ->
                             "Leaking this accessing non-final property ${leakingThisDescriptor.property.name.asString()}"
-                        null -> null
+                        else -> null
                     }
                     if (description != null) {
                         holder.registerProblem(expression, description, ProblemHighlightType.WEAK_WARNING)
