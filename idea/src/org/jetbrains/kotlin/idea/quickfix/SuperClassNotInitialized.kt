@@ -29,11 +29,11 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptor
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -119,7 +119,13 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                     val offset = newSpecifier.valueArgumentList!!.leftParenthesis!!.endOffset
                     editor.moveCaret(offset)
                     if (!ApplicationManager.getApplication().isUnitTestMode) {
-                        ShowParameterInfoHandler.invoke(project, editor, file, offset - 1, null)
+                        // workaround for API incompatibility in AS 2.2 (KT-12481)
+                        try {
+                            ShowParameterInfoHandler.invoke(project, editor, file, offset - 1, null)
+                        }
+                        catch (e: NoSuchMethodError) {
+                            // ignore
+                        }
                     }
                 }
             }
