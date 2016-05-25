@@ -20,6 +20,7 @@ import com.google.dart.compiler.backend.js.ast.JsEmptyExpression
 import com.google.dart.compiler.backend.js.ast.JsExpression
 import com.google.dart.compiler.backend.js.ast.JsName
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.js.translate.context.Namer
@@ -58,14 +59,14 @@ val VariableAccessInfo.variableName: JsName
 
 fun VariableAccessInfo.isGetAccess(): Boolean = value == null
 
-fun VariableAccessInfo.getAccessFunctionName(): String {
+fun VariableAccessInfo.getAccessDescriptor(): DeclarationDescriptor {
     val descriptor = variableDescriptor
     if (descriptor is PropertyDescriptor && descriptor.isExtension) {
         val propertyAccessorDescriptor = if (isGetAccess()) descriptor.getter else descriptor.setter
-        return context.getNameForDescriptor(propertyAccessorDescriptor!!).ident
+        return propertyAccessorDescriptor!!
     }
     else {
-        return Namer.getNameForAccessor(variableName.ident, isGetAccess(), false)
+        return variableDescriptor
     }
 }
 
