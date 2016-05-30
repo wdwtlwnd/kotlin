@@ -204,8 +204,11 @@ class CollectionStubMethodGenerator(
         OverrideResolver.generateOverridesInAClass(klass, listOf(), object : NonReportingOverrideStrategy() {
             override fun addFakeOverride(fakeOverride: CallableMemberDescriptor) {
                 if (fakeOverride !is FunctionDescriptor) return
-                if (fakeOverride.findOverriddenFromDirectSuperClass(mutableCollectionClass)?.kind == DECLARATION) {
-                    result.add(fakeOverride)
+                val foundOverriddenFromDirectSuperClass = fakeOverride.findOverriddenFromDirectSuperClass(mutableCollectionClass) ?: return
+                if (foundOverriddenFromDirectSuperClass.kind == DECLARATION) {
+                    val newDescriptor = foundOverriddenFromDirectSuperClass.copy(fakeOverride.containingDeclaration, fakeOverride.modality, fakeOverride.visibility, fakeOverride.kind, false)
+                    newDescriptor.overriddenDescriptors = fakeOverride.overriddenDescriptors
+                    result.add(newDescriptor)
                 }
             }
 
