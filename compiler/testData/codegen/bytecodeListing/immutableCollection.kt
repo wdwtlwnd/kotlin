@@ -1,5 +1,3 @@
-// FULL_JDK
-// WITH_RUNTIME
 interface ImmutableCollection<out E> : Collection<E> {
     fun add(element: @UnsafeVariance E): ImmutableCollection<E>
     fun addAll(elements: Collection<@UnsafeVariance E>): ImmutableCollection<E>
@@ -29,22 +27,4 @@ class ImmutableCollectionmpl<E> : ImmutableCollection<E> {
     override fun add(element: E): ImmutableCollection<E> = this
     override fun addAll(elements: Collection<E>): ImmutableCollection<E> = this
     override fun remove(element: E): ImmutableCollection<E> = this
-}
-
-fun box(): String {
-    val c = ImmutableCollectionmpl<String>()
-    if (c.remove("") !== c) return "fail 1"
-    if (c.add("") !== c) return "fail 2"
-    if (c.addAll(java.util.ArrayList()) !== c) return "fail 3"
-
-    val method = c.javaClass.methods.single { it.name == "remove" && it.returnType == Boolean::class.javaPrimitiveType }
-
-    try {
-        method.invoke(c, "")
-        return "fail 4"
-    } catch (e: java.lang.reflect.InvocationTargetException) {
-        if (e.cause!!.message != "Mutating immutable collection") return "fail 5: ${e.cause!!.message}"
-    }
-
-    return "OK"
 }

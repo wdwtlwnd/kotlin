@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.load.java.isFromBuiltins
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.NonReportingOverrideStrategy
 import org.jetbrains.kotlin.resolve.OverrideResolver
+import org.jetbrains.kotlin.resolve.OverridingUtil
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeUniqueAsSequence
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
@@ -206,8 +207,23 @@ class CollectionStubMethodGenerator(
                 if (fakeOverride !is FunctionDescriptor) return
                 val foundOverriddenFromDirectSuperClass = fakeOverride.findOverriddenFromDirectSuperClass(mutableCollectionClass) ?: return
                 if (foundOverriddenFromDirectSuperClass.kind == DECLARATION) {
-                    val newDescriptor = foundOverriddenFromDirectSuperClass.copy(fakeOverride.containingDeclaration, fakeOverride.modality, fakeOverride.visibility, fakeOverride.kind, false)
-                    newDescriptor.overriddenDescriptors = fakeOverride.overriddenDescriptors
+                    // If we have
+                    // - fun iterator(): MutableIterator<E>` from MutableCollection (foundOverriddenFromDirectSuperClass)
+                    // - `fun iterator(): Nothing = null!!` in real class (fakeOverride)
+                    // choose second one as more specific
+                    // In case when non of functions is more specific, choose first one:
+                    // - `fun remove(e: E): Boolean` from MutableCollection (foundOverriddenFromDirectSuperClass)
+                    // - `fun remove(e: E): ImmutableCollection<E>` in real class (fakeOverride)
+                    val mostSpecific =
+                            OverridingUtil.selectMostSpecificMember(listOf(foundOverriddenFromDirectSuperClass, fakeOverride)) { it }
+                    val newDescriptor = mostSpecific.copy(fakeOverride.containingDeclaration, fakeOverride.modality, fakeOverride.visibility, fakeOverride.kind, false)
+
+                    newDescriptor.overriddenDescriptors =
+                            fakeOverride.overriddenDescriptors.filter {
+                                // filter out incompatible descriptors, e.g. `fun remove(e: E): ImmutableCollection<E>`
+                                OverridingUtil.DEFAULT.isOverridableBy(it, newDescriptor, klass, true).result ==
+                                        OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE
+                            }
                     result.add(newDescriptor)
                 }
             }
