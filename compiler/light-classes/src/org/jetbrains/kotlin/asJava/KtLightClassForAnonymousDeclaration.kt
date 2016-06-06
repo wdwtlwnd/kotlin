@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 
 internal open class KtLightClassForAnonymousDeclaration(name: FqName,
                                                         classOrObject: KtClassOrObject) :
-        KtLightClassForExplicitDeclaration(name, classOrObject), PsiAnonymousClass {
+        KtLightClassForExplicitDeclaration(name, null, classOrObject), PsiAnonymousClass {
 
     private var cachedBaseType: SoftReference<PsiClassType>? = null
 
