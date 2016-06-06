@@ -1,0 +1,9 @@
+// "Wrap with '?.let { ... }' call" "true"
+// WITH_RUNTIME
+
+class My(var x: Int?) {
+
+    fun foo() {
+        x?.let { it.hashCode() }
+    }
+}
