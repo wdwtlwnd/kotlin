@@ -404,9 +404,13 @@ internal class TemporaryVariableElimination(function: JsFunction) {
 
             override fun visitFunction(x: JsFunction) { }
 
-            override fun visitBreak(x: JsBreak) { }
+            override fun visitBreak(x: JsBreak) {
+                flush()
+            }
 
-            override fun visitContinue(x: JsContinue) { }
+            override fun visitContinue(x: JsContinue) {
+                flush()
+            }
 
             private fun flush() {
                 lastAssignedVars.clear()
