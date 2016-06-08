@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.platform.JavaToKotlinClassMap
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -56,7 +57,7 @@ import java.util.*
 import javax.swing.Icon
 
 open class KtLightClassForExplicitDeclaration(
-        private val classFqName_: FqName? = null,
+        private val classFqName_: FqName?,
         private val classFqNameF_: ((KtClassOrObject) -> FqName)?,// FqName of (possibly inner) class
         protected val classOrObject: KtClassOrObject)
 : KtWrappingLightClass(classOrObject.manager), KtJavaMirrorMarker, StubBasedPsiElement<KotlinClassOrObjectStub<out KtClassOrObject>> {
@@ -249,12 +250,12 @@ open class KtLightClassForExplicitDeclaration(
 
         val aClass = other as KtLightClassForExplicitDeclaration
 
-        if (classFqName != aClass.classFqName) return false
-
-        return true
+        return classFqName == aClass.classFqName
     }
 
-    override fun hashCode(): Int = classFqName.hashCode()
+    override fun hashCode(): Int {
+        return classFqName.hashCode()
+    }
 
     override fun getContainingClass(): PsiClass? {
         if (classOrObject.parent === classOrObject.containingFile) return null
@@ -278,7 +279,9 @@ open class KtLightClassForExplicitDeclaration(
 
     override fun getTypeParameters(): Array<PsiTypeParameter> = _typeParameterList.typeParameters
 
-    override fun getName(): String = classFqName.shortName().asString()
+    override fun getName(): String? {
+        return classFqName.shortName().asString()
+    }
 
     override fun getQualifiedName(): String = classFqName.asString()
 
@@ -383,6 +386,7 @@ open class KtLightClassForExplicitDeclaration(
 
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
         val qualifiedName: String?
+
         if (baseClass is KtLightClassForExplicitDeclaration) {
             val baseDescriptor = baseClass.getDescriptor()
             qualifiedName = if (baseDescriptor != null) DescriptorUtils.getFqName(baseDescriptor).asString() else null
@@ -434,7 +438,7 @@ open class KtLightClassForExplicitDeclaration(
         fun create(classOrObject: KtClassOrObject): KtLightClassForExplicitDeclaration? {
             if (classOrObject is KtObjectDeclaration && classOrObject.isObjectLiteral()) {
                 return CachedValuesManager.getManager(classOrObject.project).getCachedValue(classOrObject) {
-                    val result = KtLightClassForExplicitDeclaration(null, { predictFqName(it)!! }, classOrObject)
+                    val result = KtLightClassForAnonymousDeclaration(null, { predictFqName(it)!! }, classOrObject)
                     CachedValueProvider.Result(result, PsiModificationTracker.MODIFICATION_COUNT)
                 }
             }

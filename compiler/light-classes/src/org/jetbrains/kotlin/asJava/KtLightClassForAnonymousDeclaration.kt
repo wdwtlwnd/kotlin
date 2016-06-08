@@ -18,15 +18,17 @@ package org.jetbrains.kotlin.asJava
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.*
+import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 
-internal open class KtLightClassForAnonymousDeclaration(name: FqName,
+internal open class KtLightClassForAnonymousDeclaration(name: FqName?,
+                                                        nameF: ((KtClassOrObject) -> FqName)?,
                                                         classOrObject: KtClassOrObject) :
-        KtLightClassForExplicitDeclaration(name, null, classOrObject), PsiAnonymousClass {
+        KtLightClassForExplicitDeclaration(name, nameF, classOrObject), PsiAnonymousClass {
 
     private var cachedBaseType: SoftReference<PsiClassType>? = null
 
@@ -86,6 +88,31 @@ internal open class KtLightClassForAnonymousDeclaration(name: FqName,
 
     override fun isInQualifiedNew(): Boolean {
         return false
+    }
+
+    override fun getName(): String? {
+        return classOrObject.name
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+
+        val aClass = other as KtLightClassForAnonymousDeclaration
+
+        return classOrObject == aClass.classOrObject
+    }
+
+    override fun hashCode(): Int {
+        return classOrObject.hashCode()
+    }
+
+    override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
+        if (baseClass is KtLightClassForExplicitDeclaration) {
+            return super.isInheritor(baseClass, checkDeep)
+        }
+
+        return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
     }
 
     companion object {
