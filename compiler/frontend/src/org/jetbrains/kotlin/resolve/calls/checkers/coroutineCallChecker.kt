@@ -40,17 +40,19 @@ object CoroutineSuspendCallChecker : SimpleCallChecker {
     }
 }
 
-// It can't be another CallChecker implementation because of 3rd parameter
-fun checkCoroutineBuilderCall(
-        resolvedCall: ResolvedCall<*>,
-        context: BasicCallResolutionContext,
-        languageFeatureSettings: LanguageFeatureSettings
-) {
-    val descriptor = resolvedCall.candidateDescriptor as? FunctionDescriptor ?: return
-    if (descriptor.valueParameters.any { it.isCoroutine }
-        && !languageFeatureSettings.supportsFeature(LanguageFeature.Coroutines)) {
-        context.trace.report(
-                Errors.UNSUPPORTED_FEATURE.on(
-                        resolvedCall.call.calleeExpression ?: resolvedCall.call.callElement, LanguageFeature.Coroutines))
+object BuilderFunctionsCallChecker : CallChecker {
+    // It can't be another CallChecker implementation because of 3rd parameter
+    override fun check(
+            resolvedCall: ResolvedCall<*>,
+            context: BasicCallResolutionContext,
+            languageFeatureSettings: LanguageFeatureSettings
+    ) {
+        val descriptor = resolvedCall.candidateDescriptor as? FunctionDescriptor ?: return
+        if (descriptor.valueParameters.any { it.isCoroutine }
+            && !languageFeatureSettings.supportsFeature(LanguageFeature.Coroutines)) {
+            context.trace.report(
+                    Errors.UNSUPPORTED_FEATURE.on(
+                            resolvedCall.call.calleeExpression ?: resolvedCall.call.callElement, LanguageFeature.Coroutines))
+        }
     }
 }
