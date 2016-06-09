@@ -12207,6 +12207,18 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("kt10347.kt")
+            public void testKt10347() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/operatorsOverloading/kt10347.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kt10347_2.kt")
+            public void testKt10347_2() throws Exception {
+                String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/operatorsOverloading/kt10347_2.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("kt11300.kt")
             public void testKt11300() throws Exception {
                 String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/operatorsOverloading/kt11300.kt");

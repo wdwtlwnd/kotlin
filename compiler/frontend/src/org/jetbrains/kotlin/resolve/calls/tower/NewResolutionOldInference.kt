@@ -334,6 +334,14 @@ class NewResolutionOldInference(
                 return listOf(DeprecatedUnaryPlusAsPlus)
             }
 
+            // 1 + "" cannot be resolved as variable plus and function invoke
+            if (call is CallTransformer.CallForImplicitInvoke && call.itIsVariableAsFunctionCall) {
+                val outerCall = call.outerCall
+                if (isConventionCall(outerCall) || isInfixCall(outerCall)) {
+                    return listOf(ComplexCallToVariableAsFunction)
+                }
+            }
+
             val conventionError = if (isConventionCall(call) && !descriptor.isOperator) InvokeConventionCallNoOperatorModifier else null
             val infixError = if (isInfixCall(call) && !descriptor.isInfix) InfixCallNoInfixModifier else null
             return listOfNotNull(conventionError, infixError)
@@ -397,7 +405,7 @@ class NewResolutionOldInference(
             // todo hacks
             val functionCall = CallTransformer.CallForImplicitInvoke(
                     basicCallContext.call.explicitReceiver?.check { useExplicitReceiver },
-                    variableReceiver, basicCallContext.call)
+                    variableReceiver, basicCallContext.call, true)
             val tracingForInvoke = TracingStrategyForInvoke(calleeExpression, functionCall, variableReceiver.type)
             val basicCallResolutionContext = basicCallContext.replaceBindingTrace(variable.resolvedCall.trace)
                     .replaceCall(functionCall)

@@ -106,4 +106,5 @@ object HiddenDescriptor: ResolutionDiagnostic(ResolutionCandidateApplicability.H
 
 object InvokeConventionCallNoOperatorModifier : ResolutionDiagnostic(ResolutionCandidateApplicability.CONVENTION_ERROR)
 object InfixCallNoInfixModifier : ResolutionDiagnostic(ResolutionCandidateApplicability.CONVENTION_ERROR)
+object ComplexCallToVariableAsFunction : ResolutionDiagnostic(ResolutionCandidateApplicability.CONVENTION_ERROR)
 object DeprecatedUnaryPlusAsPlus : ResolutionDiagnostic(ResolutionCandidateApplicability.CONVENTION_ERROR)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,13 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
+import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isConventionCall
+import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isInfixCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions.PLUS
 import org.jetbrains.kotlin.util.OperatorNameConventions.MINUS
@@ -58,6 +61,15 @@ class OperatorValidator : SymbolUsageValidator {
         }
 
         fun isArrayAccessExpression() = jetElement is KtArrayAccessExpression
+
+        if (resolvedCall is VariableAsFunctionResolvedCall && call is CallTransformer.CallForImplicitInvoke && call.itIsVariableAsFunctionCall) {
+            val outerCall = call.outerCall
+            if (isInfixCall(outerCall) || isConventionCall(outerCall)) {
+                trace.report(Errors.COMPLEX_CALL_TO_VARIABLE_AS_FUNCTION.on(jetElement, resolvedCall.variableCall.resultingDescriptor,
+                                                                            resolvedCall.functionCall.resultingDescriptor))
+                return
+            }
+        }
 
         if (isMultiDeclaration() || isInvokeCall()) {
             if (!functionDescriptor.isOperator && call != null) {

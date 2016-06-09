@@ -382,6 +382,7 @@ public class DefaultErrorMessages {
 
         MAP.put(OPERATOR_MODIFIER_REQUIRED, "''operator'' modifier is required on ''{0}'' in ''{1}''", NAME, STRING);
         MAP.put(INFIX_MODIFIER_REQUIRED, "''infix'' modifier is required on ''{0}'' in ''{1}''", NAME, STRING);
+        MAP.put(COMPLEX_CALL_TO_VARIABLE_AS_FUNCTION, "Only simple call like ''{0}()'' can be resolved as variable and invoke function", NAME, NAME);
 
         MAP.put(INAPPLICABLE_MODIFIER, "''{0}'' modifier is inapplicable. The reason is that {1}", TO_STRING, STRING);
 
