@@ -100,7 +100,6 @@ class ScriptTest2 {
                               ScriptKtFilesProcessor(GetTestKotlinScriptDependencies(),
                                                      null,
                                                      configuration))
-            scriptDefinition.getScriptDependenciesClasspath().forEach { configuration.addJvmClasspathRoot(File(it)) }
 
             val environment = KotlinCoreEnvironment.createForProduction(rootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
 
@@ -129,7 +128,7 @@ class GetTestKotlinScriptDependencies : GetScriptDependencies {
 
     private val kotlinPaths by lazy { PathUtil.getKotlinPathsForCompiler() }
 
-    override fun invoke(annotations: Iterable<KtAnnotationEntry>, context: Any?): ScriptDependencies? {
+    override fun invoke(annotations: Iterable<KtAnnotationEntry>, context: Any?): KotlinScriptExternalDependencies? {
         if (annotations.none()) return null
         val anns = annotations.map { parseAnnotation(it) }.filter { it.name == depends::class.simpleName }
         val cp = anns.flatMap {
@@ -140,9 +139,8 @@ class GetTestKotlinScriptDependencies : GetScriptDependencies {
                 }
             }
         }
-        return object : ScriptDependencies {
+        return object : KotlinScriptExternalDependencies {
             override val classpath = cp
-            override val implicitImports = emptyList<String>()
         }
     }
 
@@ -152,10 +150,9 @@ class GetTestKotlinScriptDependencies : GetScriptDependencies {
                     ?.filter { it.contains("out/test") }
             ?: emptyList()
 
-    override fun invoke(context: Any?): ScriptDependencies? {
-        return object : ScriptDependencies {
+    override fun invoke(context: Any?): KotlinScriptExternalDependencies? {
+        return object : KotlinScriptExternalDependencies {
             override val classpath = classpathFromClassloader()
-            override val implicitImports = emptyList<String>()
         }
     }
 }

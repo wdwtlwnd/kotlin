@@ -16,28 +16,28 @@
 
 package org.jetbrains.kotlin.script
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import org.jetbrains.kotlin.psi.KtAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.types.KotlinType
+import java.io.File
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ScriptFilePattern(val pattern: String)
 
-interface ScriptDependencies {
-    val classpath: List<String>
-    val implicitImports: List<String>
-}
-
 interface GetScriptDependencies {
-    operator fun invoke(annotations: Iterable<KtAnnotationEntry>, context: Any?): ScriptDependencies? = null
-    operator fun invoke(context: Any?): ScriptDependencies? = null
+    operator fun invoke(annotations: Iterable<KtAnnotationEntry>, context: Any?): KotlinScriptExternalDependencies? = null
+    operator fun invoke(context: Any?): KotlinScriptExternalDependencies? = null
 }
 
 @Target(AnnotationTarget.CLASS)
@@ -66,10 +66,36 @@ data class KotlinScriptDefinitionFromTemplate(val template: KClass<out Any>, val
         template.annotations.mapNotNull { it as? ScriptDependencyExtractor }.map { it.extractor.constructors.first().call() }
     }
 
-    private val dependencies by lazy {
+    private val dependencies: List<KotlinScriptExternalDependencies> by lazy {
         dependenciesExtractors.mapNotNull { it(context) }
     }
 
-    override fun getScriptDependenciesClasspath(): List<String> = dependencies.flatMap { it.classpath }
+    override fun <TF> getDependenciesFor(file: TF, project: Project): KotlinScriptExternalDependencies? {
+        val fileAnnotations = getAnnotationEntries(file, project)
+        val fileDeps = dependenciesExtractors.mapNotNull { it(fileAnnotations, context) }
+        return KotlinScriptExternalDependenciesUnion(dependencies + fileDeps)
+    }
+
+    private fun <TF> getAnnotationEntries(file: TF, project: Project): Iterable<KtAnnotationEntry> = when (file) {
+        is PsiFile -> getAnnotationEntriesFromPsiFile(file)
+        is VirtualFile -> getAnnotationEntriesFromVirtualFile(file, project)
+        is File -> {
+            val virtualFile = (StandardFileSystems.local().findFileByPath(file.absolutePath)
+                               ?: throw java.lang.IllegalArgumentException("Unable to find file ${file.canonicalPath}"))
+            getAnnotationEntriesFromVirtualFile(virtualFile, project)
+        }
+        else -> throw IllegalArgumentException("Unsupported file type $file")
+    }
+
+    private fun getAnnotationEntriesFromPsiFile(file: PsiFile) =
+            if (file is KtFile) file.annotationEntries
+            else throw IllegalArgumentException("Unable to extract kotlin annotations from ${file.name} (${file.fileType})")
+
+    private fun getAnnotationEntriesFromVirtualFile(file: VirtualFile, project: Project): Iterable<KtAnnotationEntry> {
+        val psifile: PsiFile = PsiManager.getInstance(project).findFile(file)
+                               ?: throw java.lang.IllegalArgumentException("Unable to load PSI from ${file.canonicalPath}")
+        return getAnnotationEntriesFromPsiFile(psifile)
+    }
 }
+
 
