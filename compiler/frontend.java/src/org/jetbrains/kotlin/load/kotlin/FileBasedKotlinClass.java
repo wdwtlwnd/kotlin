@@ -38,7 +38,7 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.ASM5;
 
 public abstract class FileBasedKotlinClass implements KotlinJvmBinaryClass {
     private final ClassId classId;
-    private int classVersion;
+    private final int classVersion;
     private final KotlinClassHeader classHeader;
     private final InnerClassesInfo innerClasses;
 
@@ -132,7 +132,6 @@ public abstract class FileBasedKotlinClass implements KotlinJvmBinaryClass {
         return classId;
     }
 
-    @Override
     public int getClassVersion() {
         return classVersion;
     }

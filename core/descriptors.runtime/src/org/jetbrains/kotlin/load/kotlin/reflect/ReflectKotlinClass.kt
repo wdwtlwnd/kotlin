@@ -55,10 +55,6 @@ class ReflectKotlinClass private constructor(
         }
     }
 
-    //TODO support proper value
-    override val classVersion: Int
-        get() = Opcodes.V1_6
-
     override val location: String
         get() = klass.name.replace('.', '/') + ".class"
 

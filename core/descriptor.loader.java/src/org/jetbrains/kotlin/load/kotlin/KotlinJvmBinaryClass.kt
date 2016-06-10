@@ -35,8 +35,6 @@ interface KotlinJvmBinaryClass {
 
     val classHeader: KotlinClassHeader
 
-    val classVersion: Int
-
     interface MemberVisitor {
         // TODO: abstract signatures for methods and fields instead of ASM 'desc' strings?
 
