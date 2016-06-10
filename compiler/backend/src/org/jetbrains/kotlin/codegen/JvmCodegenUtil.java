@@ -32,9 +32,7 @@ import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor;
-import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinarySourceElement;
-import org.jetbrains.kotlin.load.kotlin.ModuleMapping;
-import org.jetbrains.kotlin.load.kotlin.ModuleVisibilityUtilsKt;
+import org.jetbrains.kotlin.load.kotlin.*;
 import org.jetbrains.kotlin.psi.Call;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.psi.KtFunction;
@@ -70,7 +68,10 @@ public class JvmCodegenUtil {
         if (descriptor instanceof DeserializedClassDescriptor) {
             SourceElement source = ((DeserializedClassDescriptor) descriptor).getSource();
             if (source instanceof KotlinJvmBinarySourceElement) {
-                return ((KotlinJvmBinarySourceElement) source).getBinaryClass().getClassVersion() == Opcodes.V1_6;
+                KotlinJvmBinaryClass binaryClass = ((KotlinJvmBinarySourceElement) source).getBinaryClass();
+                assert binaryClass instanceof FileBasedKotlinClass :
+                        "KotlinJvmBinaryClass should be subclass of FileBasedKotlinClass, but " + binaryClass;
+                return ((FileBasedKotlinClass) binaryClass).getClassVersion() == Opcodes.V1_6;
             }
         }
         return !state.isJvm8Target();

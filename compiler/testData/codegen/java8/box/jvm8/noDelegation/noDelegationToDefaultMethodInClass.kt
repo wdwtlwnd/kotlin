@@ -1,5 +1,5 @@
 // KOTLIN_CONFIGURATION_FLAGS: +JVM.JVM_8_TARGET
-// WITH_REFLECT
+// WITH_RUNTIME
 // FULL_JDK
 interface Test {
     fun test() {
