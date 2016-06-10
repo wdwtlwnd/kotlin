@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isOrOverridesSynthesi
 fun <Signature> generateBridgesForFunctionDescriptor(
         descriptor: FunctionDescriptor,
         signature: (FunctionDescriptor) -> Signature,
-        abstractnessChecker: (DeclarationDescriptor) -> Boolean
+        isPureInterface: (DeclarationDescriptor) -> Boolean
 ): Set<Bridge<Signature>> {
-    return generateBridges(DescriptorBasedFunctionHandle(descriptor, abstractnessChecker), { signature(it.descriptor) })
+    return generateBridges(DescriptorBasedFunctionHandle(descriptor, isPureInterface), { signature(it.descriptor) })
 }
 
 /**
@@ -49,8 +49,8 @@ fun <Signature> generateBridgesForFunctionDescriptor(
  * can generate a bridge near an implementation (of course, in case it has a super-declaration with a different signature). Ultimately this
  * eases the process of determining what bridges are already generated in our supertypes and need to be inherited, not regenerated.
  */
-class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor, abstractnessChecker: (DeclarationDescriptor) -> Boolean) : FunctionHandle {
-    private val overridden = descriptor.overriddenDescriptors.map { DescriptorBasedFunctionHandle(it.original, abstractnessChecker) }
+class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor, isPureInterface: (DeclarationDescriptor) -> Boolean) : FunctionHandle {
+    private val overridden = descriptor.overriddenDescriptors.map { DescriptorBasedFunctionHandle(it.original, isPureInterface) }
 
     override val isDeclaration: Boolean =
             descriptor.kind.isReal ||
@@ -58,7 +58,7 @@ class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor, abstract
 
     override val isAbstract: Boolean =
             descriptor.modality == Modality.ABSTRACT ||
-            abstractnessChecker(descriptor.containingDeclaration)
+            isPureInterface(descriptor.containingDeclaration)
 
     override fun getOverridden() = overridden
 

@@ -48,14 +48,14 @@ object BuiltinSpecialBridgesUtil {
     @JvmStatic fun <Signature : Any> generateBridgesForBuiltinSpecial(
             function: FunctionDescriptor,
             signatureByDescriptor: (FunctionDescriptor) -> Signature,
-            abstractnessChecker: (DeclarationDescriptor) -> Boolean
+            isPureInterface: (DeclarationDescriptor) -> Boolean
     ): Set<BridgeForBuiltinSpecial<Signature>> {
 
-        val functionHandle = DescriptorBasedFunctionHandle(function, abstractnessChecker)
+        val functionHandle = DescriptorBasedFunctionHandle(function, isPureInterface)
         val fake = !functionHandle.isDeclaration
         val overriddenBuiltin = function.getOverriddenBuiltinReflectingJvmDescriptor()!!
 
-        val reachableDeclarations = findAllReachableDeclarations(function, abstractnessChecker)
+        val reachableDeclarations = findAllReachableDeclarations(function, isPureInterface)
 
         // e.g. `getSize()I`
         val methodItself = signatureByDescriptor(function)
@@ -81,8 +81,8 @@ object BuiltinSpecialBridgesUtil {
 
         if (fake) {
             for (overridden in function.overriddenDescriptors.map { it.original }) {
-                if (!DescriptorBasedFunctionHandle(overridden, abstractnessChecker).isAbstract) {
-                    commonBridges.removeAll(findAllReachableDeclarations(overridden, abstractnessChecker).map(signatureByDescriptor))
+                if (!DescriptorBasedFunctionHandle(overridden, isPureInterface).isAbstract) {
+                    commonBridges.removeAll(findAllReachableDeclarations(overridden, isPureInterface).map(signatureByDescriptor))
                 }
             }
         }
@@ -91,7 +91,7 @@ object BuiltinSpecialBridgesUtil {
 
         // Can be null if special builtin is final (e.g. 'name' in Enum)
         // because there should be no stubs for override in subclasses
-        val superImplementationDescriptor = findSuperImplementationForStubDelegation(function, fake, abstractnessChecker)
+        val superImplementationDescriptor = findSuperImplementationForStubDelegation(function, fake, isPureInterface)
         if (superImplementationDescriptor != null) {
             bridges.add(BridgeForBuiltinSpecial(methodItself, signatureByDescriptor(superImplementationDescriptor), isDelegateToSuper = true))
         }
@@ -126,10 +126,10 @@ object BuiltinSpecialBridgesUtil {
 private fun findSuperImplementationForStubDelegation(
         function: FunctionDescriptor,
         fake: Boolean,
-        abstractnessChecker: (DeclarationDescriptor) -> Boolean
+        isPureInterface: (DeclarationDescriptor) -> Boolean
 ): FunctionDescriptor? {
     if (function.modality != Modality.OPEN || !fake) return null
-    val implementation = findConcreteSuperDeclaration(DescriptorBasedFunctionHandle(function, abstractnessChecker)).descriptor
+    val implementation = findConcreteSuperDeclaration(DescriptorBasedFunctionHandle(function, isPureInterface)).descriptor
     if (DescriptorUtils.isInterface(implementation.containingDeclaration)) return null
 
     return implementation
@@ -137,9 +137,9 @@ private fun findSuperImplementationForStubDelegation(
 
 private fun findAllReachableDeclarations(
         functionDescriptor: FunctionDescriptor,
-        abstractnessChecker: (DeclarationDescriptor) -> Boolean
+        isPureInterface: (DeclarationDescriptor) -> Boolean
 ): MutableSet<FunctionDescriptor> =
-        findAllReachableDeclarations(DescriptorBasedFunctionHandle(functionDescriptor, abstractnessChecker)).map { it.descriptor }.toMutableSet()
+        findAllReachableDeclarations(DescriptorBasedFunctionHandle(functionDescriptor, isPureInterface)).map { it.descriptor }.toMutableSet()
 
 private fun <Signature> CallableMemberDescriptor.getSpecialBridgeSignatureIfExists(
         signatureByDescriptor: (FunctionDescriptor) -> Signature

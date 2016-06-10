@@ -97,7 +97,7 @@ public class FunctionCodegen {
     private final ClassBuilder v;
     private final MemberCodegen<?> memberCodegen;
 
-    private final Function1<DeclarationDescriptor, Boolean> ABSTRACTNESS_CHECKER = new Function1<DeclarationDescriptor, Boolean>() {
+    private final Function1<DeclarationDescriptor, Boolean> IS_PURE_INTERFACE_CHECKER = new Function1<DeclarationDescriptor, Boolean>() {
         @Override
         public Boolean invoke(DeclarationDescriptor descriptor) {
             return JvmCodegenUtil.isAnnotationOrJvm6Interface(descriptor, state);
@@ -589,7 +589,7 @@ public class FunctionCodegen {
             bridgesToGenerate = ImplKt.generateBridgesForFunctionDescriptor(
                     descriptor,
                     getSignatureMapper(typeMapper),
-                    ABSTRACTNESS_CHECKER
+                    IS_PURE_INTERFACE_CHECKER
             );
             if (!bridgesToGenerate.isEmpty()) {
                 PsiElement origin = descriptor.getKind() == DECLARATION ? getSourceFromDescriptor(descriptor) : null;
@@ -605,7 +605,7 @@ public class FunctionCodegen {
             Set<BridgeForBuiltinSpecial<Method>> specials = BuiltinSpecialBridgesUtil.generateBridgesForBuiltinSpecial(
                     descriptor,
                     getSignatureMapper(typeMapper),
-                    ABSTRACTNESS_CHECKER
+                    IS_PURE_INTERFACE_CHECKER
             );
 
             if (!specials.isEmpty()) {
