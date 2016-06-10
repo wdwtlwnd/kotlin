@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
+import org.jetbrains.kotlin.idea.script.KotlinScriptConfigurationManager
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope.sourceAndClassFiles
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -52,7 +53,10 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.utils.sure
 import java.util.*
 
-class IDELightClassGenerationSupport(private val project: Project) : LightClassGenerationSupport() {
+class IDELightClassGenerationSupport(
+        private val project: Project,
+        private val scriptConfigurationManager: KotlinScriptConfigurationManager
+) : LightClassGenerationSupport() {
     private val scopeFileComparator = JavaElementFinder.byClasspathComparator(GlobalSearchScope.allScope(project))
     private val psiManager: PsiManager = PsiManager.getInstance(project)
 
@@ -139,7 +143,8 @@ class IDELightClassGenerationSupport(private val project: Project) : LightClassG
             when {
                 ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
                     return KtLightClassForExplicitDeclaration.create(classOrObject)
-                ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
+                ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ||
+                virtualFile in scriptConfigurationManager.getAllScriptsClasspathScope() ->
                     return getLightClassForDecompiledClassOrObject(classOrObject)
                 ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
                     return SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass

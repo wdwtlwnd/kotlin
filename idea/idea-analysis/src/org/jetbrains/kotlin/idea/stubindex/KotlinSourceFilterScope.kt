@@ -29,43 +29,34 @@ class KotlinSourceFilterScope private constructor(
         private val includeProjectSourceFiles: Boolean,
         private val includeLibrarySourceFiles: Boolean,
         private val includeClassFiles: Boolean,
-        private val project: Project) : DelegatingGlobalSearchScope(delegate) {
+        private val includeScriptDependencies: Boolean,
+        private val project: Project
+) : DelegatingGlobalSearchScope(delegate) {
 
     private val index = ProjectRootManager.getInstance(project).fileIndex
 
     //NOTE: avoid recomputing in potentially bottleneck 'contains' method
     private val isJsProjectRef = Ref<Boolean?>(null)
 
-    override fun getProject(): Project? {
-        return project
-    }
+    override fun getProject() = project
 
     override fun contains(file: VirtualFile): Boolean {
         if (!super.contains(file)) return false
+
         return ProjectRootsUtil.isInContent(
                 project, file, includeProjectSourceFiles, includeLibrarySourceFiles, includeClassFiles, index, isJsProjectRef)
     }
 
     companion object {
-        fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-            return create(delegate, true, true, true, project)
-        }
+        fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project) = create(delegate, true, true, true, project)
 
-        fun sourceAndClassFiles(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-            return create(delegate, true, false, true, project)
-        }
+        fun sourceAndClassFiles(delegate: GlobalSearchScope, project: Project) = create(delegate, true, false, true, project)
 
-        fun sources(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-            return create(delegate, true, false, false, project)
-        }
+        fun sources(delegate: GlobalSearchScope, project: Project) = create(delegate, true, false, false, project)
 
-        fun librarySources(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-            return create(delegate, false, true, false, project)
-        }
+        fun librarySources(delegate: GlobalSearchScope, project: Project) = create(delegate, false, true, false, project)
 
-        fun libraryClassFiles(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-            return create(delegate, false, false, true, project)
-        }
+        fun libraryClassFiles(delegate: GlobalSearchScope, project: Project) = create(delegate, false, false, true, project)
 
         private fun create(
                 delegate: GlobalSearchScope,

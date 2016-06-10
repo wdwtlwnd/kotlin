@@ -104,8 +104,8 @@ public class SourceNavigationHelper {
 
         Project project = declaration.getProject();
         return includeLibrarySources
-               ? KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)
-               : KotlinSourceFilterScope.libraryClassFiles(GlobalSearchScope.allScope(project), project);
+               ? KotlinSourceFilterScope.Companion.librarySources(GlobalSearchScope.allScope(project), project)
+               : KotlinSourceFilterScope.Companion.libraryClassFiles(GlobalSearchScope.allScope(project), project);
     }
 
     private static List<KtFile> getContainingFiles(@NotNull Iterable<KtNamedDeclaration> declarations) {
