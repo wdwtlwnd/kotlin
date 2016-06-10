@@ -1,0 +1,34 @@
+package
+
+public typealias A</*0*/ T>  = kotlin.Array<T>
+public typealias AA</*0*/ T>  = A<A<T>>
+public typealias L</*0*/ T>  = kotlin.collections.List<T>
+public typealias M</*0*/ K, /*1*/ V>  = kotlin.collections.Map<K, V>
+public typealias NA</*0*/ X, /*1*/ Y>  = NumAny<X, Y>
+public typealias NN</*0*/ X, /*1*/ Y>  = NumNum<X, Y>
+public fun testA(/*0*/ x: A<*> [= kotlin.Array<*>]): A<*> [= kotlin.Array<*>]
+public fun testAA(/*0*/ x: AA<*> [= kotlin.Array<A<T> [= kotlin.Array<*>]>]): AA<*> [= kotlin.Array<A<T> [= kotlin.Array<*>]>]
+public fun testL(/*0*/ x: L<*> [= kotlin.collections.List<*>]): L<*> [= kotlin.collections.List<*>]
+public fun testM1(/*0*/ x: M<*, kotlin.Int> [= kotlin.collections.Map<*, out kotlin.Int>]): M<*, kotlin.Int> [= kotlin.collections.Map<*, out kotlin.Int>]
+public fun testM2(/*0*/ x: M<kotlin.Int, *> [= kotlin.collections.Map<kotlin.Int, *>]): M<kotlin.Int, *> [= kotlin.collections.Map<kotlin.Int, *>]
+public fun testM3(/*0*/ x: M<*, *> [= kotlin.collections.Map<*, *>]): M<*, *> [= kotlin.collections.Map<*, *>]
+public fun testNA1(/*0*/ x: NN<*, kotlin.Int> [= NumNum<*, kotlin.Int>]): NN<*, kotlin.Int> [= NumNum<*, kotlin.Int>]
+public fun testNA2(/*0*/ x: NA<kotlin.Int, *> [= NumAny<kotlin.Int, *>]): NA<kotlin.Int, *> [= NumAny<kotlin.Int, *>]
+public fun testNA3(/*0*/ x: NA<*, *> [= NumAny<*, *>]): NA<*, *> [= NumAny<*, *>]
+public fun testNN1(/*0*/ x: NN<*, kotlin.Int> [= NumNum<*, kotlin.Int>]): NN<*, kotlin.Int> [= NumNum<*, kotlin.Int>]
+public fun testNN2(/*0*/ x: NN<kotlin.Int, *> [= NumNum<kotlin.Int, *>]): NN<kotlin.Int, *> [= NumNum<kotlin.Int, *>]
+public fun testNN3(/*0*/ x: NN<*, *> [= NumNum<*, *>]): NN<*, *> [= NumNum<*, *>]
+
+public final class NumAny</*0*/ N : kotlin.Number, /*1*/ M : kotlin.Any> {
+    public constructor NumAny</*0*/ N : kotlin.Number, /*1*/ M : kotlin.Any>()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public final class NumNum</*0*/ N : kotlin.Number, /*1*/ M : kotlin.Number> {
+    public constructor NumNum</*0*/ N : kotlin.Number, /*1*/ M : kotlin.Number>()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
